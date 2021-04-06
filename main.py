@@ -12,7 +12,7 @@ ATTACK_COST = -40
 
 GAMMA = 0.999
 DELTA = 0.001
-
+# DELTA = 3
 HEALTH_RANGE = 5
 ARROWS_RANGE = 4
 MATERIAL_RANGE = 3
@@ -79,11 +79,11 @@ REWARDS = {
 class State:
     def __init__(self, position, arrows, material, enemy_state, health):
         if (
-            (position not in POSITION_VALUES)
-            or (arrows not in ARROW_VALUES)
-            or (material not in MATERIAL_VALUES)
-            or (health not in HEALTH_VALUES)
-            or (enemy_state not in STATE_VALUES)
+                (position not in POSITION_VALUES)
+                or (arrows not in ARROW_VALUES)
+                or (material not in MATERIAL_VALUES)
+                or (health not in HEALTH_VALUES)
+                or (enemy_state not in STATE_VALUES)
         ):
             raise ValueError
 
@@ -110,7 +110,7 @@ def action(action_type, state):
     state = State(*state)
 
     if state.enemy_health == 0:
-        return None, None
+        return 0, None
 
     ###########################################################
     if action_type == ACTION_UP:
@@ -884,7 +884,7 @@ def action(action_type, state):
                 State(
                     state.position,
                     state.arrows,
-                    state.material,
+                    state.material - 1,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -899,7 +899,7 @@ def action(action_type, state):
                     possibilities[0][2],
                 )
             )
-            possibilities[-1][2].arrows = max(ARROWS_RANGE - 1, state.arrows + arrow)
+            possibilities[-1][2].arrows = min(ARROWS_RANGE - 1, state.arrows + arrow)
 
         possibilities = possibilities[1:]
 
@@ -946,15 +946,11 @@ def action(action_type, state):
 
     ###########################################################
     elif action_type == ACTION_GATHER:
-        if not (
-            state.position in [POSITIONS["S"]]
-            and state.material < MATERIAL_VALUES[MATERIAL_RANGE - 1]
-        ):
+        if not state.position in [POSITIONS["S"]]:
             return None, None
 
         choices = []
         possibilities = []
-
         possibilities.append(
             (
                 0.75,
@@ -1357,7 +1353,9 @@ def action(action_type, state):
         return cost, choices
 
     elif action_type == ACTION_NONE:
-        return None, None
+        if state.enemy_health == 0:
+            return None, None
+    return None, None
 
 
 def value_iteration():
@@ -1373,7 +1371,6 @@ def value_iteration():
     done = False
     while not done:
         # Iteration
-        index += 1
         temp = np.zeros(utilities.shape)
         delta = np.NINF
         for state, util in np.ndenumerate(utilities):
@@ -1382,12 +1379,15 @@ def value_iteration():
                 cost, states = action(act_index, state)
                 if cost is None:
                     continue
-                print("not none")
-                expected_util = reduce(
-                    add, map(lambda x: x[0] * utilities[x[2].show()], states)
-                )
-                new_util = max(new_util, cost + GAMMA * expected_util)
+                if states is not None:
+                    expected_util = reduce(
+                        add, map(lambda x: x[0] * utilities[x[2].show()], states)
+                    )
+                else:
+                    # cost 0 states None -> health = 0
+                    expected_util = 0
 
+                new_util = max(new_util, cost + GAMMA * expected_util)
             temp[state] = new_util
             delta = max(delta, abs(util - new_util))
 
@@ -1398,29 +1398,28 @@ def value_iteration():
                 continue
             best_util = np.NINF
             best_action = None
-
             for act_index in range(NUM_ACTIONS):
                 cost, states = action(act_index, state)
-
+                if cost == 0:
+                    best_action = ACTION_NONE
+                    best_util = 0
                 if states is None:
                     continue
-
                 action_util = cost + GAMMA * reduce(
-                    add, map(lambda x: x[0] * utilities[x[1].show()], states)
+                    add, map(lambda x: x[0] * utilities[x[2].show()], states)
                 )
-
                 if action_util > best_util:
                     best_action = act_index
                     best_util = action_util
-
             policies[state] = best_action
 
         # show(index, utilities, policies, path)
         index += 1
+        print(index, delta)
         if delta < DELTA:
             done = True
-
-    print(utilities)
+    # print(index)
+    # print(utilities)
     return index
 
 
