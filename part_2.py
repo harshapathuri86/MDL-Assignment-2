@@ -9,7 +9,7 @@ Y = [1 / 2, 1, 2]
 REWARD = 50
 COST = -10 / Y[TEAM % 3]
 ATTACK_COST = -40
-
+TASK = 0
 GAMMA = 0.999
 DELTA = 0.001
 # DELTA = 3
@@ -324,11 +324,11 @@ def action(action_type, state):
     elif action_type == ACTION_LEFT:
         if state.position not in [POSITIONS["E"], POSITIONS["C"]]:
             return None, None
-
-        new_position = (
-            POSITIONS["W"] if state.position == POSITIONS["C"] else POSITIONS["C"]
-        )
-
+        # print("LOLOL")
+        if state.position is POSITIONS["E"] and TASK is not 1:
+            new_position = POSITIONS["C"]
+        else:
+            new_position = POSITIONS["W"]
         choices = []
         possibilities = []
 
@@ -791,7 +791,7 @@ def action(action_type, state):
             possibilities.append(
                 (
                     1.0,
-                    REWARDS["STEP_COST"],
+                    REWARDS["STAY"],
                     State(
                         new_position,
                         state.arrows,
@@ -805,7 +805,7 @@ def action(action_type, state):
             possibilities.append(
                 (
                     0.85,
-                    REWARDS["STEP_COST"],
+                    REWARDS["STAY"],
                     State(
                         new_position,
                         state.arrows,
@@ -852,7 +852,7 @@ def action(action_type, state):
                     choices.append(
                         (
                             possibility[0] * PROBS["enemy"]["R"]["D"],
-                            REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
+                            REWARDS["STAY"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
                                 0,
@@ -1486,7 +1486,7 @@ def value_iteration(filepath):
             policies[state] = best_action
 
         index += 1
-        print(index, delta)
+        # print(index, delta)
         show(index, utilities, policies, filepath)
         if delta < DELTA:
             done = True
@@ -1497,4 +1497,21 @@ def value_iteration(filepath):
 os.makedirs("outputs", exist_ok=True)
 
 filepath = 'outputs/part_2_trace.txt'
+value_iteration(filepath)
+
+#case 1 L from E -> W
+TASK=1
+filepath='outputs/part_2_task_2.1_trace.txt'
+value_iteration(filepath)
+#case 2 stay->0
+TASK=2
+REWARDS["STAY"]=0
+filepath = 'outputs/part_2_task_2.2_trace.txt'
+value_iteration(filepath)
+
+#case 3
+TASK=3
+REWARDS["STAY"]=REWARDS["STEP_COST"]
+GAMMA=0.25
+filepath = 'outputs/part_2_task_2.3_trace.txt'
 value_iteration(filepath)
