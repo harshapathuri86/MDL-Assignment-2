@@ -1426,7 +1426,7 @@ def show(i, utilities, policies, filepath):
                                                         ACTIONS[policies[state.show()]], util))
 
 
-def value_iteration(filepath):
+def value_iteration():
     global expected_util
     utilities = np.zeros(
         (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE)
@@ -1486,31 +1486,52 @@ def value_iteration(filepath):
             policies[state] = best_action
 
         index += 1
-        # print(index, delta)
-        show(index, utilities, policies, filepath)
+        print(index, delta)
         if delta < DELTA:
             done = True
-    return index
+    return policies
 
 
-os.makedirs("outputs", exist_ok=True)
+policies = value_iteration()
 
-filepath = 'outputs/part_2_trace.txt'
-value_iteration(filepath)
 
-#case 1 L from E -> W
-TASK=1
-filepath='outputs/part_2_task_2.1_trace.txt'
-value_iteration(filepath)
-#case 2 stay->0
-TASK=2
-REWARDS["STAY"]=0
-filepath = 'outputs/part_2_task_2.2_trace.txt'
-value_iteration(filepath)
+def simulate(pos, mat, arrows, state, health):
+    positions = {
+        0: "N",
+        1: "S",
+        2: "E",
+        3: "W",
+        4: "C",
+    }
+    enemystate = {
+        0: 'D',
+        1: 'R'
+    }
 
-#case 3
-TASK=3
-REWARDS["STAY"]=REWARDS["STEP_COST"]
-GAMMA=0.25
-filepath = 'outputs/part_2_task_2.3_trace.txt'
-value_iteration(filepath)
+    #     iState = (POSITIONS["C"],0,2,ENEMY_STATE["R"],HEALTH_VALUES[HEALTH_RANGE-1])
+    iState = (POSITIONS[pos], mat, arrows, ENEMY_STATE[state], int(health / HEALTH_FACTOR))
+    state = State(*iState)
+
+    while True:
+        act = policies[state.show()]
+        cost, choices = action(act, state.show())
+        print(
+            "({},{},{},{},{}):{}\n".format(positions[state.position],
+                                           state.material * MATERIAL_FACTOR,
+                                           state.arrows * ARROWS_FACTOR,
+                                           enemystate[state.enemy_state],
+                                           state.enemy_health * HEALTH_FACTOR,
+                                           ACTIONS[policies[state.show()]]))
+
+        if cost == np.NINF:
+            break
+        #         print("ACTION:",ACTIONS[act],act)
+        prob = [choices[i][0] for i, _ in enumerate(choices)]
+        sta = [choices[i][2] for i, _ in enumerate(choices)]
+        lol = np.random.choice(sta[:], p=prob)
+        state = lol
+
+
+simulate("W", 0, 0, "D", 100)
+
+simulate("C", 2, 0, "R", 100)
