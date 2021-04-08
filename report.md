@@ -43,7 +43,7 @@ If the enemy is in R, Indiana moves to a safer place, W, N, S, and performs poss
 (E,0,0,R,0):NONE
 ```
 
-Then moves right to attack as the enemy is in a Dormant state.
+Indiana moves right to attack as the enemy is in a Dormant state.
 At position E, as Indiana has 0 material and arrows, his best option is to hit with the blade.
 He continues to hit with the blade till the enemy dies.
 

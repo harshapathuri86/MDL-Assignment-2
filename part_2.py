@@ -1561,20 +1561,20 @@ os.makedirs("outputs", exist_ok=True)
 file_path = "outputs/part_2_trace.txt"
 value_iteration(file_path)
 
-# Case 1: L from E -> W
-TASK = 1
-file_path = "outputs/part_2_task_2.1_trace.txt"
-value_iteration(file_path)
+# # Case 1: L from E -> W
+# TASK = 1
+# file_path = "outputs/part_2_task_2.1_trace.txt"
+# value_iteration(file_path)
 
-# Case 2: stay -> 0
-TASK = 2
-REWARDS["STAY"] = 0
-file_path = "outputs/part_2_task_2.2_trace.txt"
-value_iteration(file_path)
+# # Case 2: stay -> 0
+# TASK = 2
+# REWARDS["STAY"] = 0
+# file_path = "outputs/part_2_task_2.2_trace.txt"
+# value_iteration(file_path)
 
-# Case 3:
-TASK = 3
-REWARDS["STAY"] = REWARDS["STEP_COST"]
-GAMMA = 0.25
-file_path = "outputs/part_2_task_2.3_trace.txt"
-value_iteration(file_path)
+# # Case 3:
+# TASK = 3
+# REWARDS["STAY"] = REWARDS["STEP_COST"]
+# GAMMA = 0.25
+# file_path = "outputs/part_2_task_2.3_trace.txt"
+# value_iteration(file_path)
