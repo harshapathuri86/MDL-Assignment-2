@@ -12,7 +12,6 @@ ATTACK_COST = -40
 TASK = 0
 GAMMA = 0.999
 DELTA = 0.001
-# DELTA = 3
 HEALTH_RANGE = 5
 ARROWS_RANGE = 4
 MATERIAL_RANGE = 3
@@ -51,7 +50,7 @@ ACTIONS = {
     6: "SHOOT",
     7: "GATHER",
     8: "CRAFT",
-    9: "NONE"
+    9: "NONE",
 }
 
 POSITIONS = {
@@ -67,7 +66,6 @@ PROBS = {
         "D": {"D": 0.8, "R": 0.2},
         "R": {"D": 0.5, "R": 0.5},
     },
-    "player": {},
     "arrows": {
         1: 0.5,
         2: 0.35,
@@ -91,11 +89,11 @@ REWARDS = {
 class State:
     def __init__(self, position, arrows, material, enemy_state, health):
         if (
-                (position not in POSITION_VALUES)
-                or (arrows not in ARROW_VALUES)
-                or (material not in MATERIAL_VALUES)
-                or (health not in HEALTH_VALUES)
-                or (enemy_state not in STATE_VALUES)
+            (position not in POSITION_VALUES)
+            or (arrows not in ARROW_VALUES)
+            or (material not in MATERIAL_VALUES)
+            or (health not in HEALTH_VALUES)
+            or (enemy_state not in STATE_VALUES)
         ):
             raise ValueError
 
@@ -324,11 +322,12 @@ def action(action_type, state):
     elif action_type == ACTION_LEFT:
         if state.position not in [POSITIONS["E"], POSITIONS["C"]]:
             return None, None
-        # print("LOLOL")
+
         if state.position is POSITIONS["E"] and TASK != 1:
             new_position = POSITIONS["C"]
         else:
             new_position = POSITIONS["W"]
+
         choices = []
         possibilities = []
 
@@ -560,8 +559,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.2 * 0.8,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             state.arrows,
@@ -590,8 +593,11 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.2 * 0.2,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
                         ),
                         State(
                             state.position,
@@ -622,8 +628,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.2 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             state.arrows,
@@ -671,8 +681,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.1 * 0.8,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             state.arrows,
@@ -701,8 +715,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.1 * 0.2,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             state.arrows,
@@ -732,8 +750,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.1 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 2) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             state.arrows,
@@ -1053,8 +1075,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.9 * 0.8,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1083,8 +1109,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.9 * 0.2,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1114,8 +1144,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.9 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1163,8 +1197,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.5 * 0.8,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1193,8 +1231,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.5 * 0.2,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1224,8 +1266,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.5 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1273,8 +1319,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.25 * 0.8,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1303,8 +1353,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.25 * 0.2,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1334,8 +1388,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.25 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1364,8 +1422,12 @@ def action(action_type, state):
                 choices.append(
                     (
                         0.25 * 0.5,
-                        REWARDS["STEP_COST"] + (
-                            REWARDS["FINAL_REWARD"] if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0 else 0),
+                        REWARDS["STEP_COST"]
+                        + (
+                            REWARDS["FINAL_REWARD"]
+                            if max(HEALTH_VALUES[0], state.enemy_health - 1) == 0
+                            else 0
+                        ),
                         State(
                             state.position,
                             new_arrows,
@@ -1400,7 +1462,7 @@ def action(action_type, state):
     return None, None
 
 
-def show(i, utilities, policies, filepath):
+def show(i, utilities, policies, file_path):
     positions = {
         0: "N",
         1: "S",
@@ -1408,25 +1470,26 @@ def show(i, utilities, policies, filepath):
         3: "W",
         4: "C",
     }
-    enemystate = {
-        0: 'D',
-        1: 'R'
-    }
-    with open(filepath, "a+") as f:
+    enemystate = {0: "D", 1: "R"}
+    with open(file_path, "a+") as f:
         f.write("iteration={}\n".format(i))
         utilities = np.around(utilities, 3)
         for state, util in np.ndenumerate(utilities):
             state = State(*state)
             f.write(
-                "({},{},{},{},{}):{}=[{:.3f}]\n".format(positions[state.position],
-                                                        state.material * MATERIAL_FACTOR,
-                                                        state.arrows * ARROWS_FACTOR,
-                                                        enemystate[state.enemy_state],
-                                                        state.enemy_health * HEALTH_FACTOR,
-                                                        ACTIONS[policies[state.show()]], util))
+                "({},{},{},{},{}):{}=[{:.3f}]\n".format(
+                    positions[state.position],
+                    state.material * MATERIAL_FACTOR,
+                    state.arrows * ARROWS_FACTOR,
+                    enemystate[state.enemy_state],
+                    state.enemy_health * HEALTH_FACTOR,
+                    ACTIONS[policies[state.show()]],
+                    util,
+                )
+            )
 
 
-def value_iteration(filepath):
+def value_iteration(file_path):
     global expected_util
     utilities = np.zeros(
         (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE)
@@ -1447,7 +1510,7 @@ def value_iteration(filepath):
             lol = State(*state)
             for act_index in range(NUM_ACTIONS):
                 cost, states = action(act_index, state)
-                # print(cost,act_index)
+                # print(cost, act_index)
                 if cost is None:  # action not valid
                     continue
                 elif cost == np.NINF:  # health = 0
@@ -1487,7 +1550,7 @@ def value_iteration(filepath):
 
         index += 1
         # print(index, delta)
-        show(index, utilities, policies, filepath)
+        show(index, utilities, policies, file_path)
         if delta < DELTA:
             done = True
     return index
@@ -1495,22 +1558,23 @@ def value_iteration(filepath):
 
 os.makedirs("outputs", exist_ok=True)
 
-filepath = 'outputs/part_2_trace.txt'
-value_iteration(filepath)
+file_path = "outputs/part_2_trace.txt"
+value_iteration(file_path)
 
-#case 1 L from E -> W
-TASK=1
-filepath='outputs/part_2_task_2.1_trace.txt'
-value_iteration(filepath)
-#case 2 stay->0
-TASK=2
-REWARDS["STAY"]=0
-filepath = 'outputs/part_2_task_2.2_trace.txt'
-value_iteration(filepath)
+# Case 1: L from E -> W
+TASK = 1
+file_path = "outputs/part_2_task_2.1_trace.txt"
+value_iteration(file_path)
 
-#case 3
-TASK=3
-REWARDS["STAY"]=REWARDS["STEP_COST"]
-GAMMA=0.25
-filepath = 'outputs/part_2_task_2.3_trace.txt'
-value_iteration(filepath)
+# Case 2: stay -> 0
+TASK = 2
+REWARDS["STAY"] = 0
+file_path = "outputs/part_2_task_2.2_trace.txt"
+value_iteration(file_path)
+
+# Case 3:
+TASK = 3
+REWARDS["STAY"] = REWARDS["STEP_COST"]
+GAMMA = 0.25
+file_path = "outputs/part_2_task_2.3_trace.txt"
+value_iteration(file_path)
