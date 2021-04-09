@@ -322,7 +322,6 @@ def action(action_type, state):
     elif action_type == ACTION_LEFT:
         if state.position not in [POSITIONS["E"], POSITIONS["C"]]:
             return None, None
-        # print("LOLOL")
         if state.position is POSITIONS["E"] and TASK != 1:
             new_position = POSITIONS["C"]
         else:

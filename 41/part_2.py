@@ -1,7 +1,8 @@
-from copy import deepcopy
-
-import cvxpy as cp
 import numpy as np
+from copy import deepcopy
+from functools import reduce
+from operator import add
+import os
 
 TEAM = 41
 Y = [1 / 2, 1, 2]
@@ -80,7 +81,7 @@ ENEMY_STATE = {
 REWARDS = {
     "STEP_COST": -10 / Y[TEAM % 3],
     "HIT_REWARD": -40,
-    "FINAL_REWARD": 0,
+    "FINAL_REWARD": 50,
     "STAY": -10 / Y[TEAM % 3],
 }
 
@@ -109,15 +110,6 @@ class State:
             self.material,
             self.enemy_state,
             self.enemy_health,
-        )
-
-    def get_index(self):
-        return (
-            self.enemy_health
-            + HEALTH_RANGE * self.enemy_state
-            + HEALTH_RANGE * 2 * self.material
-            + HEALTH_RANGE * 2 * MATERIAL_RANGE * self.arrows
-            + HEALTH_RANGE * 2 * MATERIAL_RANGE * ARROWS_RANGE * self.position
         )
 
     def __str__(self):
@@ -995,7 +987,7 @@ def action(action_type, state):
 
     ###########################################################
     elif action_type == ACTION_GATHER:
-        if state.position not in [POSITIONS["S"]]:
+        if not state.position in [POSITIONS["S"]]:
             return None, None
 
         choices = []
@@ -1497,88 +1489,92 @@ def show(i, utilities, policies, file_path):
             )
 
 
-# (C,2,3,R,100)
-
-# position, arrows, material, enemy_state, health
-def linear_programming():
-    # alpha, A, r, x
-    alpha = np.zeros((600, 1))
-    initState = State(
-        POSITIONS["C"], 3, 2, ENEMY_STATE["R"], HEALTH_VALUES[HEALTH_RANGE - 1]
-    )
-    print(len(alpha))
-    alpha[initState.get_index()][0] = 1
-
-    R = []
+def value_iteration(file_path):
+    global expected_util
     utilities = np.zeros(
         (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE)
     )
+    policies = np.full(
+        (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE),
+        -1,
+        dtype="int",
+    )
+    index = -1
+    done = False
+    while not done:
+        # Iteration
+        temp = np.zeros(utilities.shape)
+        delta = np.NINF
+        for state, util in np.ndenumerate(utilities):
+            new_util = np.NINF
+            lol = State(*state)
+            for act_index in range(NUM_ACTIONS):
+                cost, states = action(act_index, state)
+                # print(cost, act_index)
+                if cost is None:  # action not valid
+                    continue
+                elif cost == np.NINF:  # health = 0
+                    expected_util = 0
+                    cost = 0
+                if states is not None:
+                    expected_util = reduce(
+                        add, map(lambda x: x[0] * utilities[x[2].show()], states)
+                    )
+                new_util = max(new_util, cost + GAMMA * expected_util)
 
-    ind = 0
-    for state, _ in np.ndenumerate(utilities):
-        for act_index in range(NUM_ACTIONS):
-            cost, states = action(act_index, state)
-            if cost is None:  # action not valid
-                continue
-            elif cost == np.NINF and act_index == ACTION_NONE:  # health = 0
-                R.append(0)
-                ind += 1
+            temp[state] = new_util
+            delta = max(delta, abs(util - new_util))
 
-            elif states is not None:
-                R.append(cost)
-                ind += 1
+        utilities = deepcopy(temp)
 
-    R = np.array(R)
-    A = np.zeros((600, len(R)), dtype=np.float64)
-    ind = 0
-    for state, _ in np.ndenumerate(utilities):
-        i = State(*state).get_index()
-        for act_index in range(NUM_ACTIONS):
-            cost, choices = action(act_index, state)
-            if cost is None:  # action not valid
-                continue
-            if cost == np.NINF and act_index == ACTION_NONE:  # health = 0
-                A[i][ind] = 1
-                ind += 1
-            if choices is not None:
-                for nxt in choices:
-                    if nxt[2].show() != state:
-                        A[i][ind] += nxt[0]
-                        A[nxt[2].get_index()][ind] -= nxt[0]
-                ind += 1
+        for state, _ in np.ndenumerate(utilities):
+            best_util = np.NINF
+            best_action = None
+            for act_index in range(NUM_ACTIONS):
 
-    print(len(A), len(A[0]))
+                cost, states = action(act_index, state)
+                if cost == np.NINF and states is None:
+                    best_action = ACTION_NONE
+                    best_util = 0
+                if states is None:
+                    continue
 
-    for i in range(len(A[0])):
-        for j in range(len(A)):
-            print(A[i][j], end="\t")
-        print()
+                action_util = cost + GAMMA * reduce(
+                    add, map(lambda x: x[0] * utilities[x[2].show()], states)
+                )
+                if action_util > best_util:
+                    best_action = act_index
+                    best_util = action_util
 
-    x = cp.Variable(shape=R.shape, name="x")
-    constraints = [cp.matmul(A, x) == alpha, x >= 0]
-    objective = cp.Maximize(cp.matmul(R, x))
-    problem = cp.Problem(objective, constraints)
-    solution = problem.solve()
+            policies[state] = best_action
 
-    arr = list(x.value)
-    values = [float(val) for val in arr]
-
-    idx = 0
-    for state, _ in np.ndenumerate(utilities):
-        actions = []
-        for act_index in range(NUM_ACTIONS):
-            cost, choices = action(act_index, state)
-            if cost is None:  # action not valid
-                continue
-            if cost == np.NINF and act_index == ACTION_NONE:  # health = 0
-                actions.append(act_index)
-            if choices is not None:
-                actions.append(act_index)
-        act_idx = np.argmax(x[idx : idx + len(actions)])
-        idx += len(actions)
-        best_action = actions[act_idx]
-        local = []
-        # append state and action to policy
+        index += 1
+        # print(index, delta)
+        show(index, utilities, policies, file_path)
+        if delta < DELTA:
+            done = True
+    return index
 
 
-linear_programming()
+os.makedirs("outputs", exist_ok=True)
+
+file_path = "outputs/part_2_trace.txt"
+value_iteration(file_path)
+
+# # Case 1: L from E -> W
+# TASK = 1
+# file_path = "outputs/part_2_task_2.1_trace.txt"
+# value_iteration(file_path)
+
+# # Case 2: stay -> 0
+# TASK = 2
+# REWARDS["STAY"] = 0
+# file_path = "outputs/part_2_task_2.2_trace.txt"
+# value_iteration(file_path)
+
+# # Case 3:
+# TASK = 3
+# REWARDS["STAY"] = REWARDS["STEP_COST"]
+# GAMMA = 0.25
+# file_path = "outputs/part_2_task_2.3_trace.txt"
+# value_iteration(file_path)
