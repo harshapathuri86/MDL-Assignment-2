@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 from functools import reduce
 from operator import add
+import json
 import os
 
 TEAM = 41
@@ -81,7 +82,7 @@ ENEMY_STATE = {
 REWARDS = {
     "STEP_COST": -10 / Y[TEAM % 3],
     "HIT_REWARD": -40,
-    "FINAL_REWARD": 50,
+    "FINAL_REWARD": 0,
     "STAY": -10 / Y[TEAM % 3],
 }
 
@@ -89,11 +90,11 @@ REWARDS = {
 class State:
     def __init__(self, position, arrows, material, enemy_state, health):
         if (
-            (position not in POSITION_VALUES)
-            or (arrows not in ARROW_VALUES)
-            or (material not in MATERIAL_VALUES)
-            or (health not in HEALTH_VALUES)
-            or (enemy_state not in STATE_VALUES)
+                (position not in POSITION_VALUES)
+                or (arrows not in ARROW_VALUES)
+                or (material not in MATERIAL_VALUES)
+                or (health not in HEALTH_VALUES)
+                or (enemy_state not in STATE_VALUES)
         ):
             raise ValueError
 
@@ -1489,92 +1490,116 @@ def show(i, utilities, policies, file_path):
             )
 
 
-def value_iteration(file_path):
-    global expected_util
-    utilities = np.zeros(
-        (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE)
-    )
-    policies = np.full(
-        (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE),
-        -1,
-        dtype="int",
-    )
-    index = -1
-    done = False
-    while not done:
-        # Iteration
-        temp = np.zeros(utilities.shape)
-        delta = np.NINF
-        for state, util in np.ndenumerate(utilities):
-            new_util = np.NINF
-            lol = State(*state)
-            for act_index in range(NUM_ACTIONS):
-                cost, states = action(act_index, state)
-                # print(cost, act_index)
-                if cost is None:  # action not valid
-                    continue
-                elif cost == np.NINF:  # health = 0
-                    expected_util = 0
-                    cost = 0
-                if states is not None:
-                    expected_util = reduce(
-                        add, map(lambda x: x[0] * utilities[x[2].show()], states)
-                    )
-                new_util = max(new_util, cost + GAMMA * expected_util)
+class Llp:
+    def __init__(self):
+        self.dim = self.get_dimensions()
+        self.r = self.get_r()
+        self.a = self.get_a()
+        self.alpha = self.get_alpha()
+        self.x = self.quest()
+        self.policy = []
+        self.solution_dict = {}
+        self.objective = 0.0
 
-            temp[state] = new_util
-            delta = max(delta, abs(util - new_util))
+    def get_dimensions(self):
+        dim = 0
+        for i in range(NUM_STATES):
+            dim = dim + len(State.from_hash(i).actions())
+        return dim
 
-        utilities = deepcopy(temp)
+    def get_a(self):
+        a = np.zeros((NUM_STATES, self.dim), dtype=np.float64)
 
-        for state, _ in np.ndenumerate(utilities):
-            best_util = np.NINF
-            best_action = None
-            for act_index in range(NUM_ACTIONS):
+        idx = 0
+        for i in range(NUM_STATES):
+            s = State.from_hash(i)
+            actions = s.actions()
 
-                cost, states = action(act_index, state)
-                if cost == np.NINF and states is None:
-                    best_action = ACTION_NONE
-                    best_util = 0
-                if states is None:
-                    continue
+            for action in actions:
+                a[i][idx] += 1
+                next_states = s.do(action)
 
-                action_util = cost + GAMMA * reduce(
-                    add, map(lambda x: x[0] * utilities[x[2].show()], states)
-                )
-                if action_util > best_util:
-                    best_action = act_index
-                    best_util = action_util
+                for next_state in next_states:
+                    a[next_state[1].get_hash()][idx] -= next_state[0]
 
-            policies[state] = best_action
+                # increment idx
+                idx += 1
 
-        index += 1
-        # print(index, delta)
-        show(index, utilities, policies, file_path)
-        if delta < DELTA:
-            done = True
-    return index
+        return a
+
+    def get_r(self):
+        r = np.full((1, self.dim), COST)
+
+        idx = 0
+        for i in range(NUM_STATES):
+            actions = State.from_hash(i).actions()
+
+            for action in actions:
+                if action == ACT_NOOP:
+                    r[0][idx] = 0
+                idx += 1
+
+        return r
+
+    def get_alpha(self):
+        alpha = np.zeros((NUM_STATES, 1))
+        s = State(HEALTH_VALUES[-1], ARROWS_VALUES[-1], STAMINA_VALUES[-1]).get_hash()
+        alpha[s][0] = 1
+        return alpha
+
+    def quest(self):
+        x = cp.Variable((self.dim, 1), 'x')
+
+        constraints = [
+            cp.matmul(self.a, x) == self.alpha,
+            x >= 0
+        ]
+
+        objective = cp.Maximize(cp.matmul(self.r, x))
+        problem = cp.Problem(objective, constraints)
+
+        solution = problem.solve()
+        self.objective = solution
+        arr = list(x.value)
+        l = [float(val) for val in arr]
+        return l
+
+    def get_policy(self):
+        idx = 0
+        for i in range(NUM_STATES):
+            s = State.from_hash(i)
+            actions = s.actions()
+            act_idx = np.argmax(self.x[idx: idx + len(actions)])
+            idx += len(actions)
+            best_action = actions[act_idx]
+            local = []
+            local.append(s.as_list())
+            local.append(ACTION_NAMES[best_action])
+            self.policy.append(local)
+
+    def generate_dict(self):
+        self.solution_dict["a"] = self.a.tolist()
+        r = [float(val) for val in np.transpose(self.r)]
+        self.solution_dict["r"] = r
+        alp = [float(val) for val in self.alpha]
+        self.solution_dict["alpha"] = alp
+        self.solution_dict["x"] = self.x
+        self.solution_dict["policy"] = self.policy
+        self.solution_dict["objective"] = float(self.objective)
+
+    def write_output(self):
+        path = "outputs/output.json"
+        json_object = json.dumps(self.solution_dict, indent=4)
+        with open(path, 'w+') as f:
+            f.write(json_object)
+
+    def execute(self):
+        os.makedirs('outputs', exist_ok=True)
+        self.quest()
+        self.get_policy()
+        self.generate_dict()
+        self.write_output()
 
 
-os.makedirs("outputs", exist_ok=True)
-
-file_path = "outputs/part_2_trace.txt"
-value_iteration(file_path)
-
-# # Case 1: L from E -> W
-# TASK = 1
-# file_path = "outputs/part_2_task_2.1_trace.txt"
-# value_iteration(file_path)
-
-# # Case 2: stay -> 0
-# TASK = 2
-# REWARDS["STAY"] = 0
-# file_path = "outputs/part_2_task_2.2_trace.txt"
-# value_iteration(file_path)
-
-# # Case 3:
-# TASK = 3
-# REWARDS["STAY"] = REWARDS["STEP_COST"]
-# GAMMA = 0.25
-# file_path = "outputs/part_2_task_2.3_trace.txt"
-# value_iteration(file_path)
+lero = Lero()
+lero.execute()
