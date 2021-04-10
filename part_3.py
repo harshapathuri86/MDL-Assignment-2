@@ -1,5 +1,6 @@
 from copy import deepcopy
-
+import os
+import json
 import cvxpy as cp
 import numpy as np
 
@@ -29,34 +30,34 @@ MATERIAL_FACTOR = 1  # 0, 1, 2
 
 NUM_ACTIONS = 10
 ACTION_UP = 0
-ACTION_DOWN = 1
-ACTION_LEFT = 2
+ACTION_LEFT = 1
+ACTION_DOWN = 2
 ACTION_RIGHT = 3
 ACTION_STAY = 4
-ACTION_HIT = 5
-ACTION_SHOOT = 6
-ACTION_GATHER = 7
-ACTION_CRAFT = 8
+ACTION_SHOOT = 5
+ACTION_HIT = 6
+ACTION_CRAFT = 7
+ACTION_GATHER = 8
 ACTION_NONE = 9
 
 ACTIONS = {
     0: "UP",
-    1: "DOWN",
-    2: "LEFT",
+    1: "LEFT",
+    2: "DOWN",
     3: "RIGHT",
     4: "STAY",
-    5: "HIT",
-    6: "SHOOT",
-    7: "GATHER",
-    8: "CRAFT",
+    5: "SHOOT",
+    6: "HIT",
+    7: "CRAFT",
+    8: "GATHER",
     9: "NONE",
 }
 
 POSITIONS = {
-    "N": 0,
-    "S": 1,
+    "W": 0,
+    "N": 1,
     "E": 2,
-    "W": 3,
+    "S": 3,
     "C": 4,
 }
 
@@ -88,11 +89,11 @@ REWARDS = {
 class State:
     def __init__(self, position, arrows, material, enemy_state, health):
         if (
-            (position not in POSITION_VALUES)
-            or (arrows not in ARROW_VALUES)
-            or (material not in MATERIAL_VALUES)
-            or (health not in HEALTH_VALUES)
-            or (enemy_state not in STATE_VALUES)
+                (position not in POSITION_VALUES)
+                or (material not in MATERIAL_VALUES)
+                or (arrows not in ARROW_VALUES)
+                or (health not in HEALTH_VALUES)
+                or (enemy_state not in STATE_VALUES)
         ):
             raise ValueError
 
@@ -113,11 +114,11 @@ class State:
 
     def get_index(self):
         return (
-            self.enemy_health
-            + HEALTH_RANGE * self.enemy_state
-            + HEALTH_RANGE * 2 * self.material
-            + HEALTH_RANGE * 2 * MATERIAL_RANGE * self.arrows
-            + HEALTH_RANGE * 2 * MATERIAL_RANGE * ARROWS_RANGE * self.position
+                self.enemy_health
+                + HEALTH_RANGE * self.enemy_state
+                + HEALTH_RANGE * 2 * self.arrows
+                + HEALTH_RANGE * 2 * ARROWS_RANGE * self.material
+                + HEALTH_RANGE * 2 * MATERIAL_RANGE * ARROWS_RANGE * self.position
         )
 
     def __str__(self):
@@ -148,8 +149,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     new_position,
-                    state.arrows,
                     state.material,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -161,8 +162,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     POSITIONS["E"],
-                    state.arrows,
                     state.material,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -195,8 +196,8 @@ def action(action_type, state):
                             REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
-                                0,
                                 state.material,
+                                0,
                                 state.enemy_state,
                                 min(
                                     state.enemy_health + 1,
@@ -246,8 +247,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     new_position,
-                    state.arrows,
                     state.material,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -259,8 +260,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     POSITIONS["E"],
-                    state.arrows,
                     state.material,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -293,8 +294,8 @@ def action(action_type, state):
                             REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
-                                0,
                                 state.material,
+                                0,
                                 state.enemy_state,
                                 min(
                                     state.enemy_health + 1,
@@ -346,8 +347,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -359,8 +360,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         POSITIONS["E"],
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -373,8 +374,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -407,8 +408,8 @@ def action(action_type, state):
                             REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
-                                0,
                                 state.material,
+                                0,
                                 state.enemy_state,
                                 min(
                                     state.enemy_health + 1,
@@ -459,8 +460,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -473,8 +474,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -486,8 +487,8 @@ def action(action_type, state):
                     REWARDS["STEP_COST"],
                     State(
                         POSITIONS["E"],
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -520,8 +521,8 @@ def action(action_type, state):
                             REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
-                                0,
                                 state.material,
+                                0,
                                 state.enemy_state,
                                 min(
                                     state.enemy_health + 1,
@@ -575,8 +576,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -589,8 +590,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -609,8 +610,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             ENEMY_STATE["R"],
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -623,8 +624,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             ENEMY_STATE["R"],
                             state.enemy_health,
                         ),
@@ -644,8 +645,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -658,8 +659,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -673,8 +674,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                         State(
                             state.position,
-                            ARROW_VALUES[0],
                             state.material,
+                            ARROW_VALUES[0],
                             ENEMY_STATE["D"],
                             min(
                                 state.enemy_health + 1, HEALTH_VALUES[HEALTH_RANGE - 1]
@@ -697,8 +698,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -711,8 +712,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -731,8 +732,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             ENEMY_STATE["R"],
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -745,8 +746,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             ENEMY_STATE["R"],
                             state.enemy_health,
                         ),
@@ -766,8 +767,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 2),
                         ),
@@ -780,8 +781,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            state.arrows,
                             state.material,
+                            state.arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -795,8 +796,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                         State(
                             state.position,
-                            ARROW_VALUES[0],
                             state.material,
+                            ARROW_VALUES[0],
                             ENEMY_STATE["D"],
                             min(
                                 state.enemy_health + 1, HEALTH_VALUES[HEALTH_RANGE - 1]
@@ -824,8 +825,8 @@ def action(action_type, state):
                     REWARDS["STAY"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -838,8 +839,8 @@ def action(action_type, state):
                     REWARDS["STAY"],
                     State(
                         new_position,
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -851,8 +852,8 @@ def action(action_type, state):
                     REWARDS["STAY"],
                     State(
                         POSITIONS["E"],
-                        state.arrows,
                         state.material,
+                        state.arrows,
                         state.enemy_state,
                         state.enemy_health,
                     ),
@@ -885,8 +886,8 @@ def action(action_type, state):
                             REWARDS["STAY"] + REWARDS["HIT_REWARD"],
                             State(
                                 state.position,
-                                0,
                                 state.material,
+                                0,
                                 state.enemy_state,
                                 min(
                                     state.enemy_health + 1,
@@ -932,8 +933,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     state.position,
-                    state.arrows,
                     state.material - 1,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -1006,8 +1007,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     state.position,
-                    state.arrows,
                     min(state.material + 1, MATERIAL_VALUES[MATERIAL_RANGE - 1]),
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -1019,8 +1020,8 @@ def action(action_type, state):
                 REWARDS["STEP_COST"],
                 State(
                     state.position,
-                    state.arrows,
                     state.material,
+                    state.arrows,
                     state.enemy_state,
                     state.enemy_health,
                 ),
@@ -1091,8 +1092,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1105,8 +1106,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1125,8 +1126,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1139,8 +1140,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             state.enemy_health,
                         ),
@@ -1160,8 +1161,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1174,8 +1175,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1189,8 +1190,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                         State(
                             state.position,
-                            ARROW_VALUES[0],
                             state.material,
+                            ARROW_VALUES[0],
                             ENEMY_STATE["D"],
                             min(
                                 state.enemy_health + 1, HEALTH_VALUES[HEALTH_RANGE - 1]
@@ -1213,8 +1214,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1227,8 +1228,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1247,8 +1248,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1261,8 +1262,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             state.enemy_health,
                         ),
@@ -1282,8 +1283,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1296,8 +1297,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1311,8 +1312,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"] + REWARDS["HIT_REWARD"],
                         State(
                             state.position,
-                            ARROW_VALUES[0],
                             state.material,
+                            ARROW_VALUES[0],
                             ENEMY_STATE["D"],
                             min(
                                 state.enemy_health + 1, HEALTH_VALUES[HEALTH_RANGE - 1]
@@ -1335,8 +1336,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1349,8 +1350,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1369,8 +1370,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1383,8 +1384,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["R"],
                             state.enemy_health,
                         ),
@@ -1404,8 +1405,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1418,8 +1419,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             state.enemy_state,
                             state.enemy_health,
                         ),
@@ -1438,8 +1439,8 @@ def action(action_type, state):
                         ),
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["D"],
                             max(HEALTH_VALUES[0], state.enemy_health - 1),
                         ),
@@ -1451,8 +1452,8 @@ def action(action_type, state):
                         REWARDS["STEP_COST"],
                         State(
                             state.position,
-                            new_arrows,
                             state.material,
+                            new_arrows,
                             ENEMY_STATE["D"],
                             state.enemy_health,
                         ),
@@ -1470,48 +1471,33 @@ def action(action_type, state):
     return None, None
 
 
-def show(i, utilities, policies, file_path):
+def show(states, actions):
     positions = {
-        0: "N",
-        1: "S",
+        0: "W",
+        1: "N",
         2: "E",
-        3: "W",
+        3: "S",
         4: "C",
     }
     enemystate = {0: "D", 1: "R"}
-    with open(file_path, "a+") as f:
-        f.write("iteration={}\n".format(i))
-        utilities = np.around(utilities, 3)
-        for state, util in np.ndenumerate(utilities):
-            state = State(*state)
-            f.write(
-                "({},{},{},{},{}):{}=[{:.3f}]\n".format(
-                    positions[state.position],
-                    state.material * MATERIAL_FACTOR,
-                    state.arrows * ARROWS_FACTOR,
-                    enemystate[state.enemy_state],
-                    state.enemy_health * HEALTH_FACTOR,
-                    ACTIONS[policies[state.show()]],
-                    util,
-                )
-            )
+    dict = []
+    length = len(actions)
+    for i in range(length):
+        st = State(*states[i])
+        dict.append([(positions[st.position], st.material * MATERIAL_FACTOR, st.arrows * ARROWS_FACTOR,
+                      enemystate[st.enemy_state], st.enemy_health * HEALTH_FACTOR), ACTIONS[actions[i]]])
+    return dict
 
 
-# (C,2,3,R,100)
-
-# position, arrows, material, enemy_state, health
 def linear_programming():
-    # alpha, A, r, x
-    alpha = np.zeros((600, 1))
-    initState = State(
-        POSITIONS["C"], 3, 2, ENEMY_STATE["R"], HEALTH_VALUES[HEALTH_RANGE - 1]
-    )
-    print(len(alpha))
-    alpha[initState.get_index()][0] = 1
+    output = {}
 
+    alpha = np.zeros((600, 1))
+    initState = State(POSITIONS["C"], 2, 3, ENEMY_STATE["R"], HEALTH_VALUES[HEALTH_RANGE - 1])
+    alpha[initState.get_index()][0] = 1
     R = []
     utilities = np.zeros(
-        (NUM_POSITIONS, ARROWS_RANGE, MATERIAL_RANGE, NUM_STATES, HEALTH_RANGE)
+        (NUM_POSITIONS, MATERIAL_RANGE, ARROWS_RANGE, NUM_STATES, HEALTH_RANGE)
     )
 
     ind = 0
@@ -1528,9 +1514,11 @@ def linear_programming():
                 R.append(cost)
                 ind += 1
 
-    R = np.array(R)
     A = np.zeros((600, len(R)), dtype=np.float64)
+    R = np.array(R)
+    R = R.reshape((len(R), 1))
     ind = 0
+
     for state, _ in np.ndenumerate(utilities):
         i = State(*state).get_index()
         for act_index in range(NUM_ACTIONS):
@@ -1541,29 +1529,26 @@ def linear_programming():
                 A[i][ind] = 1
                 ind += 1
             if choices is not None:
+                check = False
                 for nxt in choices:
                     if nxt[2].show() != state:
+                        check = True
                         A[i][ind] += nxt[0]
                         A[nxt[2].get_index()][ind] -= nxt[0]
-                ind += 1
-
-    print(len(A), len(A[0]))
-
-    for i in range(len(A[0])):
-        for j in range(len(A)):
-            print(A[i][j], end="\t")
-        print()
+                if check: ind += 1
 
     x = cp.Variable(shape=R.shape, name="x")
+    R = R.T
     constraints = [cp.matmul(A, x) == alpha, x >= 0]
     objective = cp.Maximize(cp.matmul(R, x))
     problem = cp.Problem(objective, constraints)
     solution = problem.solve()
-
     arr = list(x.value)
     values = [float(val) for val in arr]
 
-    idx = 0
+    ind = 0
+    a = []
+    b = []
     for state, _ in np.ndenumerate(utilities):
         actions = []
         for act_index in range(NUM_ACTIONS):
@@ -1573,12 +1558,29 @@ def linear_programming():
             if cost == np.NINF and act_index == ACTION_NONE:  # health = 0
                 actions.append(act_index)
             if choices is not None:
-                actions.append(act_index)
-        act_idx = np.argmax(x[idx : idx + len(actions)])
-        idx += len(actions)
+                check = False
+                for choice in choices:
+                    if choice[2].show() != state:
+                        check = True
+                if check: actions.append(act_index)
+        act_idx = np.argmax(arr[ind: ind + len(actions)])
         best_action = actions[act_idx]
-        local = []
-        # append state and action to policy
+        ind += len(actions)
+        b.append(best_action)
+        a.append(state)
+    policy = show(a, b)
+    output["a"]=A.tolist()
+    output["r"]=R[0].tolist()
+    output["alpha"]=alpha.T[0].tolist()
+    output["x"]=values
+    output["policy"]=policy
+    output["objective"]=float(solution)
+    path = "outputs/part_3.json"
+    obj = json.dumps(output)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(obj)
+
 
 
 linear_programming()
