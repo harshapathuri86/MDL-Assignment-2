@@ -1,88 +1,28 @@
-# Value Iteration
+# Linear Programming
 
-Number of iterations to converge: 115
+### Matrix A
 
-If the enemy is in D, Indiana is at an advantage, so it tries to attack if possible.
-If the enemy is in R, Indiana moves to a safer place, W, N, S, and performs possible actions at that state.
+- Matrix A is of shape `600*1936`
+- Every row represents a valid state in the MDP
+- Every column represents a valid action at a particular state
+- For every transition action `A` at state `S1`, we calculated the probability `p` of reaching for each possible next state using the `action(action_type, state)` function. It returns the expected cost and a list of the next states with their probability
+- As it is the inflow for state `S2`, we subtracted it for `S2`. As it is the outflow for state `S1`, we added it. If `S1` and `S2` are the same, we ignored it as it causes a self-loop
+  > `A[S2A][S2]-=p` `A[S1A][S1]+=p`
 
-### State N
-- If the enemy is in a Dormant state, Indiana tries to go down to attack it even if he has no material or arrows.
-- If the enemy is in a Ready state, Indiana tries to stay away from the enemy and craft an arrow if he has some material. 
+### Policy 
 
-### State E
-- As the chances to hit and shoot are high at this position, he tries to attack the enemy whenever possible.
-- As the damage to the hit action is high, and the probability is highest in position E, he tries to hit the enemy with a blade when the health is full. 
-- Indiana tries to shoot the enemy if he reached the arrow limit to make craft new arrows.
-
-### State S
-- If the enemy is in a Dormant state, Indiana tries to move up to attack it.
-- Indiana tries to gather material if he has no arrows. 
-- Stays at S, if the enemy is in R state to avoid the attack.
-
-### State W
-- If the enemy is in a Dormant state, Indiana tries to move right to attack it, as the probability of hitting/shooting is high in C, E compared to W.
-- If the enemy is in Ready state, Indiana stays at W to avoid the attack and tries to shoot with the arrow.
-
-### State C
-- If Indiana has no material and arrows, he tries to gather material.
-- Indiana tries to move right and attack the enemy if he has some arrows.
-- If the enemy is in Ready state and Indiana has some material, he stays away from the attack and tries to craft arrows.
-- If arrows are full and the enemy is in a ready state, moves left to avoid losing all arrows and tries to shoot.
+- After solving the linear program, we get `X`, the optimal solution.
+- We can get the policy by working in a reverse manner of creating `R`(reward) vector.
+- We have to find the actions which correspond to the same state and the action which gives the highest value is the optimal action for that state.
+- For example,
+  > If we have `S1_Ac1,S1_Ac2,S1_Ac3,S2_Ac2,S2_Ac5 ...` in the `X`, we find the maximum value in `S1_Ac1,S1_Ac2,S1_Ac3`. If it is of `S1_Ac2`, then `Ac2` is the best action in the state `S1`. The array of all the best actions in the order of states gives us the policy.
+- The agent only crafts arrows or gathers material when it is essential like if the enemy's health is high. He doesn't do it i the enemy's health is low as he can kill it with a throw of a blade.
+- He tries to move towards enemy when it is dormant state so he can attack it with high precesion.
+- If the enemy is in ready state, he moves away from enemy. If he can go to North or South, he chooses based on the available material and arrows.
 
 
-## Simulation (W, 0, 0, D, 100)
-```
-(W,0,0,D,100):RIGHT
-(C,0,0,D,100):RIGHT
-(E,0,0,R,100):HIT
-(E,0,0,R,100):HIT
-(E,0,0,D,100):HIT
-(E,0,0,D,50):HIT
-(E,0,0,D,50):HIT
-(E,0,0,R,50):HIT
-(E,0,0,R,0):NONE
-```
+### Multiple Policies
 
-Indiana moves right to attack as the enemy is in a Dormant state.
-At position E, as Indiana has 0 material and arrows, his best option is to hit with the blade.
-He continues to hit with the blade till the enemy dies.
-
-
-## Simulation (C, 2, 0, R, 100)
-```
-(C,0,2,R,100):UP
-(N,0,2,R,100):STAY
-(N,0,2,D,100):DOWN
-(C,0,2,D,100):RIGHT
-(E,0,2,D,100):HIT
-(E,0,2,D,100):HIT
-(E,0,2,D,100):HIT
-(E,0,2,D,50):SHOOT
-(E,0,1,R,25):SHOOT
-(E,0,0,R,0):NONE
-```
-Indiana moves up to be safe as the enemy is in a Ready state.
-Next, he moves down to attack as the enemy is in a Dormant state.
-Next, moves right to attack as the chance of hitting with blade increases.
-Fails to hit the enemy and hits again.
-As enemy health decreased, Indiana shoots twice without a miss and kills it.
-
-### CASE 1
-> Indiana, now on the LEFT action at East Square, will go to West Square.
-- Number of iterations to converge: 129
-- Initially, when Indiana is at E, he tried to attack the enemy whenever possible, even if it is an R state. Because the enemy attacks Indiana even if he is in the C state, it is better to stay at E and attack.
-- As we change the left action at state E when Indiana is at risk, he moves left to W and avoids the attack for sure.
-
-### CASE 2
-> The step cost of the STAY action is now zero.
-- Number of iterations to converge: 104
-- Indiana can stay in a position to avoid the attack with 0 costs. This makes Indiana more risk-averse as he can take more time to kill the enemy.
-- Indiana avoids crafting and gathering if it is not essential and can just stay at S, N for protection.
-- Previously, Indiana used to attack at position E even when the enemy is in a Ready state. Now, he can move left till W to stay there to avoid attacks and hit the enemy with the blade as the cost to stays is zero.
-
-### CASE 3
-> Change the value of gamma to 0.25
-- Number of iterations to converge: 8
-- Due to the small discount factor, the iterations converge fast.
-- The policy is risk-averse compared to the original policy in some situations and risk-seeking in some other situations.
-- This policy is not accurate as of the original policy. It lacks the long-term effects of the actions.
+- Suppose we change our r vector (reward) by changing the step cost or adding the final reward or changing the stay action cost, or changing the cost of any particular action, there is a chance that we will get a different policy.
+- Suppose we change our A matrix by changing the flow, like by changing the probabilities of actions leading to different states, there is a chance that we will get a different policy.
+- Suppose we change our alpha vector by changing probabilities of other states also being a start state. In that case, there is a chance that we will get a different policy because randomness is introduced to the model. Whenever we run the algorithm, we have some probability of any of the possible start states can be our initial state.
