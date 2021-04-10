@@ -89,11 +89,11 @@ REWARDS = {
 class State:
     def __init__(self, position, arrows, material, enemy_state, health):
         if (
-                (position not in POSITION_VALUES)
-                or (material not in MATERIAL_VALUES)
-                or (arrows not in ARROW_VALUES)
-                or (health not in HEALTH_VALUES)
-                or (enemy_state not in STATE_VALUES)
+            (position not in POSITION_VALUES)
+            or (material not in MATERIAL_VALUES)
+            or (arrows not in ARROW_VALUES)
+            or (health not in HEALTH_VALUES)
+            or (enemy_state not in STATE_VALUES)
         ):
             raise ValueError
 
@@ -114,11 +114,11 @@ class State:
 
     def get_index(self):
         return (
-                self.enemy_health
-                + HEALTH_RANGE * self.enemy_state
-                + HEALTH_RANGE * 2 * self.arrows
-                + HEALTH_RANGE * 2 * ARROWS_RANGE * self.material
-                + HEALTH_RANGE * 2 * MATERIAL_RANGE * ARROWS_RANGE * self.position
+            self.enemy_health
+            + HEALTH_RANGE * self.enemy_state
+            + HEALTH_RANGE * 2 * self.arrows
+            + HEALTH_RANGE * 2 * ARROWS_RANGE * self.material
+            + HEALTH_RANGE * 2 * MATERIAL_RANGE * ARROWS_RANGE * self.position
         )
 
     def __str__(self):
@@ -1484,8 +1484,18 @@ def show(states, actions):
     length = len(actions)
     for i in range(length):
         st = State(*states[i])
-        dict.append([(positions[st.position], st.material * MATERIAL_FACTOR, st.arrows * ARROWS_FACTOR,
-                      enemystate[st.enemy_state], st.enemy_health * HEALTH_FACTOR), ACTIONS[actions[i]]])
+        dict.append(
+            [
+                (
+                    positions[st.position],
+                    st.material * MATERIAL_FACTOR,
+                    st.arrows * ARROWS_FACTOR,
+                    enemystate[st.enemy_state],
+                    st.enemy_health * HEALTH_FACTOR,
+                ),
+                ACTIONS[actions[i]],
+            ]
+        )
     return dict
 
 
@@ -1493,7 +1503,9 @@ def linear_programming():
     output = {}
 
     alpha = np.zeros((600, 1))
-    initState = State(POSITIONS["C"], 2, 3, ENEMY_STATE["R"], HEALTH_VALUES[HEALTH_RANGE - 1])
+    initState = State(
+        POSITIONS["C"], 2, 3, ENEMY_STATE["R"], HEALTH_VALUES[HEALTH_RANGE - 1]
+    )
     alpha[initState.get_index()][0] = 1
     R = []
     utilities = np.zeros(
@@ -1529,13 +1541,14 @@ def linear_programming():
                 A[i][ind] = 1
                 ind += 1
             if choices is not None:
-                check = False
+                possible = False
                 for nxt in choices:
                     if nxt[2].show() != state:
-                        check = True
+                        possible = True
                         A[i][ind] += nxt[0]
                         A[nxt[2].get_index()][ind] -= nxt[0]
-                if check: ind += 1
+                if possible:
+                    ind += 1
 
     x = cp.Variable(shape=R.shape, name="x")
     R = R.T
@@ -1558,29 +1571,30 @@ def linear_programming():
             if cost == np.NINF and act_index == ACTION_NONE:  # health = 0
                 actions.append(act_index)
             if choices is not None:
-                check = False
+                possible = False
                 for choice in choices:
                     if choice[2].show() != state:
-                        check = True
-                if check: actions.append(act_index)
-        act_idx = np.argmax(arr[ind: ind + len(actions)])
+                        possible = True
+                if possible:
+                    actions.append(act_index)
+        act_idx = np.argmax(arr[ind : ind + len(actions)])
         best_action = actions[act_idx]
         ind += len(actions)
         b.append(best_action)
         a.append(state)
+
     policy = show(a, b)
-    output["a"]=A.tolist()
-    output["r"]=R[0].tolist()
-    output["alpha"]=alpha.T[0].tolist()
-    output["x"]=values
-    output["policy"]=policy
-    output["objective"]=float(solution)
+    output["a"] = A.tolist()
+    output["r"] = R[0].tolist()
+    output["alpha"] = alpha.T[0].tolist()
+    output["x"] = values
+    output["policy"] = policy
+    output["objective"] = float(solution)
     path = "outputs/part_3.json"
     obj = json.dumps(output)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         f.write(obj)
-
 
 
 linear_programming()
